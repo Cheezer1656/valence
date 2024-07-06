@@ -803,7 +803,7 @@ pub struct DropItemStackEvent {
     pub stack: ItemStack,
 }
 
-fn handle_click_slot(
+pub fn handle_click_slot(
     mut packets: EventReader<PacketEvent>,
     mut clients: Query<(
         &mut Client,
