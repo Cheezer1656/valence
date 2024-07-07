@@ -67,6 +67,7 @@ impl Plugin for InventoryPlugin {
 pub struct Inventory {
     title: Text,
     kind: InventoryKind,
+    mutable: bool,
     slots: Box<[ItemStack]>,
     /// Contains a set bit for each modified slot in `slots`.
     #[doc(hidden)]
@@ -76,13 +77,19 @@ pub struct Inventory {
 impl Inventory {
     pub fn new(kind: InventoryKind) -> Self {
         // TODO: default title to the correct translation key instead
-        Self::with_title(kind, "Inventory")
+        Self::with_title(kind, "Inventory", true)
     }
 
-    pub fn with_title<'a, T: IntoText<'a>>(kind: InventoryKind, title: T) -> Self {
+    pub fn new_immutable(kind: InventoryKind) -> Self {
+        // TODO: default title to the correct translation key instead
+        Self::with_title(kind, "Inventory", false)
+    }
+
+    pub fn with_title<'a, T: IntoText<'a>>(kind: InventoryKind, title: T, mutable: bool) -> Self {
         Inventory {
             title: title.into_cow_text().into_owned(),
             kind,
+            mutable,
             slots: vec![ItemStack::EMPTY; kind.slot_count()].into(),
             changed: 0,
         }
@@ -214,6 +221,10 @@ impl Inventory {
 
     pub fn kind(&self) -> InventoryKind {
         self.kind
+    }
+
+    pub fn mutable(&self) -> bool {
+        self.mutable
     }
 
     /// The text displayed on the inventory's title bar.
@@ -855,6 +866,17 @@ pub fn handle_click_slot(
                 state_id: VarInt(inv_state.state_id.0),
                 slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
                 carried_item: Cow::Borrowed(&cursor_item.0),
+            });
+
+            continue;
+        }
+
+        if open_inv.is_some() && !open_inv.as_ref().unwrap().mutable() {
+            client.write_packet(&InventoryS2c {
+                window_id: inv_state.window_id,
+                state_id: VarInt(inv_state.state_id.0),
+                slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
+                carried_item: Cow::Borrowed(&pkt.carried_item),
             });
 
             continue;
