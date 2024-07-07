@@ -885,6 +885,16 @@ pub fn handle_click_slot(
                     slots: Cow::Borrowed(client_inv.slot_slice()),
                     carried_item: Cow::Borrowed(&cursor_item.0),
                 });
+                click_slot_events.send(ClickSlotEvent {
+                    client: packet.client,
+                    window_id: pkt.window_id,
+                    state_id: pkt.state_id.0,
+                    slot_id: pkt.slot_idx,
+                    button: pkt.button,
+                    mode: pkt.mode,
+                    slot_changes: pkt.slot_changes.into(),
+                    carried_item: pkt.carried_item,
+                });
                 continue;
             }
         }
