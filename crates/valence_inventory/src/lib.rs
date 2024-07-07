@@ -871,15 +871,22 @@ pub fn handle_click_slot(
             continue;
         }
 
-        if open_inv.is_some() && !open_inv.as_ref().unwrap().mutable() {
-            client.write_packet(&InventoryS2c {
-                window_id: inv_state.window_id,
-                state_id: VarInt(inv_state.state_id.0),
-                slots: Cow::Borrowed(open_inv.unwrap_or(client_inv).slot_slice()),
-                carried_item: Cow::Borrowed(&pkt.carried_item),
-            });
-
-            continue;
+        if let Some(open_inv) = open_inv {
+            if !open_inv.mutable() {
+                client.write_packet(&InventoryS2c {
+                    window_id: inv_state.window_id,
+                    state_id: VarInt(inv_state.state_id.0),
+                    slots: Cow::Borrowed(open_inv.slot_slice()),
+                    carried_item: Cow::Borrowed(&cursor_item.0),
+                });
+                client.write_packet(&InventoryS2c {
+                    window_id: 0,
+                    state_id: VarInt(inv_state.state_id.0),
+                    slots: Cow::Borrowed(client_inv.slot_slice()),
+                    carried_item: Cow::Borrowed(&cursor_item.0),
+                });
+                continue;
+            }
         }
 
         if pkt.slot_idx < 0 && pkt.mode == ClickMode::Click {
