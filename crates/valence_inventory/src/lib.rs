@@ -262,7 +262,7 @@ impl Inventory {
         std::mem::replace(&mut self.title, title.into_cow_text().into_owned())
     }
 
-    pub(crate) fn slot_slice(&self) -> &[ItemStack] {
+    pub fn slot_slice(&self) -> &[ItemStack] {
         &self.slots
     }
 
