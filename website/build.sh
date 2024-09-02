@@ -22,9 +22,9 @@ zola build
 mdbook build
 
 # build rustdoc
-mkdir public/rustdoc
-RUSTDOCFLAGS='--cfg unstable_doc' cargo doc --no-deps --workspace --all-features
-cp -r ../target/doc/* public/rustdoc
+#mkdir public/rustdoc
+#RUSTDOCFLAGS='--cfg unstable_doc' cargo doc --no-deps --workspace --all-features
+#cp -r ../target/doc/* public/rustdoc
 
 # copy logo assets
 cp ../assets/logo.svg public/valence.svg
