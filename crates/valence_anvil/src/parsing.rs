@@ -115,7 +115,7 @@ pub enum ParseChunkError {
     InvalidBlockEntityPosition,
 }
 
-fn parse_chunk(
+pub fn parse_chunk(
     mut nbt: Compound,
     biome_map: &BTreeMap<Ident<String>, BiomeId>, // TODO: replace with biome registry arg.
 ) -> Result<UnloadedChunk, ParseChunkError> {
