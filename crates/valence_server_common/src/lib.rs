@@ -98,6 +98,15 @@ pub struct Server {
 }
 
 impl Server {
+    // Creates a new server with the given settings.
+    pub fn new(threshold: CompressionThreshold, tick_rate: NonZeroU32) -> Self {
+        Self {
+            current_tick: 0,
+            threshold,
+            tick_rate,
+        }
+    }
+
     /// Returns the number of ticks that have elapsed since the server began.
     pub fn current_tick(&self) -> i64 {
         self.current_tick
