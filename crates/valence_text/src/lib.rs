@@ -259,6 +259,48 @@ impl Text {
         }))
     }
 
+    pub fn from_legacy(input: &str) -> Text {
+        let mut chars = input.chars().peekable();
+
+        let mut current_style = Style::default();
+        let mut prev_style = Style::default();
+        let mut buffer = String::new();
+        let mut parts: Vec<Text> = Vec::new();
+
+        while let Some(c) = chars.next() {
+            if c == '§' {
+                if let Some(code) = chars.next() {
+                    // Flush current buffer before applying new style
+                    if !buffer.is_empty() {
+                        parts.push(current_style.make_text(&buffer, &prev_style));
+                        buffer.clear();
+                        prev_style = current_style.clone();
+                    }
+
+                    current_style.apply_code(code);
+                }
+            } else {
+                buffer.push(c);
+            }
+        }
+
+        // Flush remaining text
+        if !buffer.is_empty() {
+            parts.push(current_style.make_text(&buffer, &prev_style));
+        }
+
+        // Build root
+        if parts.is_empty() {
+            Text::default()
+        } else {
+            let mut root = parts.remove(0);
+            if !parts.is_empty() {
+                root.0.extra = parts;
+            }
+            root
+        }
+    }
+
     /// Create translated text based on the given translation key, with extra
     /// text components to be inserted into the slots of the translation text.
     pub fn translate<K, W>(key: K, with: W) -> Self
@@ -670,5 +712,80 @@ impl<'de> Deserialize<'de> for Text {
         }
 
         deserializer.deserialize_any(TextVisitor)
+    }
+}
+
+#[derive(Clone, Debug)]
+struct Style {
+    color: Color,
+    bold: bool,
+    italic: bool,
+    underlined: bool,
+    strikethrough: bool,
+    obfuscated: bool,
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Self {
+            color: Color::RESET,
+            bold: false,
+            italic: false,
+            underlined: false,
+            strikethrough: false,
+            obfuscated: false,
+        }
+    }
+}
+
+impl Style {
+    // TODO - Optimize this by inheriting from the parent text's style instead of copying all modifiers every time
+    fn make_text(&self, content: &str, parent: &Style) -> Text {
+        Text(Box::new(TextInner {
+            content: TextContent::Text {
+                text: Cow::Owned(content.to_string()),
+            },
+            color: if self.color == parent.color { None } else { Some(self.color) },
+            bold: if self.bold == parent.bold { None } else { Some(self.bold) },
+            italic: if self.italic == parent.italic { None } else { Some(self.italic) },
+            underlined: if self.underlined == parent.underlined { None } else { Some(self.underlined) },
+            strikethrough: if self.strikethrough == parent.strikethrough { None } else { Some(self.strikethrough) },
+            obfuscated: if self.obfuscated == parent.obfuscated { None } else { Some(self.obfuscated) },
+            ..Default::default()
+        }))
+    }
+
+    fn apply_code(&mut self, code: char) {
+        match code.to_ascii_lowercase() {
+            // Colors (reset formatting!)
+            '0' => self.color = Color::BLACK,
+            '1' => self.color = Color::DARK_BLUE,
+            '2' => self.color = Color::DARK_GREEN,
+            '3' => self.color = Color::DARK_AQUA,
+            '4' => self.color = Color::DARK_RED,
+            '5' => self.color = Color::DARK_PURPLE,
+            '6' => self.color = Color::GOLD,
+            '7' => self.color = Color::GRAY,
+            '8' => self.color = Color::DARK_GRAY,
+            '9' => self.color = Color::BLUE,
+            'a' => self.color = Color::GREEN,
+            'b' => self.color = Color::AQUA,
+            'c' => self.color = Color::RED,
+            'd' => self.color = Color::LIGHT_PURPLE,
+            'e' => self.color = Color::YELLOW,
+            'f' => self.color = Color::WHITE,
+
+            // Formatting
+            'l' => self.bold = true,
+            'o' => self.italic = true,
+            'n' => self.underlined = true,
+            'm' => self.strikethrough = true,
+            'k' => self.obfuscated = true,
+
+            // Reset
+            'r' => *self = Style::default(),
+
+            _ => {}
+        }
     }
 }

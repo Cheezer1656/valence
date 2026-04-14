@@ -110,6 +110,32 @@ fn storage_nbt() {
 }
 
 #[test]
+fn text_from_legacy() {
+    let text = "Green".color(Color::GREEN)
+        + "Bold".bold()
+        + "Italic".italic()
+        + "Normal".color(Color::RESET).not_bold().not_italic()
+        + "Red".color(Color::RED)
+        + "Under".underlined()
+        + "Strike".strikethrough()
+        + "Combo".color(Color::AQUA).bold().italic().not_underlined().not_strikethrough()
+        + "Plain".color(Color::RESET).not_bold().not_italic()
+        + "Obf".obfuscated()
+        + "Yellow".color(Color::YELLOW).not_obfuscated()
+        + "StillYellow"
+        + "DoubleBold ".bold()
+        + "ResetTwiceEnd".color(Color::RESET).not_bold();
+
+    assert_eq!(
+        text,
+        Text::from_legacy(
+            "§aGreen§lBold§oItalic§rNormal§cRed§nUnder§mStrike§r§b§l§oCombo§rPlain§kObf§r§eYellow§\
+             e§eStillYellow§l§lDoubleBold §r§rResetTwiceEnd§"
+        )
+    );
+}
+
+#[test]
 fn text_to_legacy_lossy() {
     let text = "Heavily formatted green text\n"
         .bold()
